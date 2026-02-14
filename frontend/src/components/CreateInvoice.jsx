@@ -34,8 +34,8 @@ export default function CreateInvoice({ onCancel }) {
                     axios.get('/resources.php?type=clients'),
                     axios.get('/resources.php?type=services')
                 ]);
-                setClients(clientsRes.data.data);
-                setServicesList(servicesRes.data.data);
+                setClients(Array.isArray(clientsRes.data.data) ? clientsRes.data.data : []);
+                setServicesList(Array.isArray(servicesRes.data.data) ? servicesRes.data.data : []);
             } catch (error) {
                 console.error("Error loading resources", error);
             }

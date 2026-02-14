@@ -25,10 +25,12 @@ export default function Dashboard({ setIsAuthenticated }) {
         try {
             const response = await axios.get('/invoices.php');
             if (response.data.success) {
-                setInvoices(response.data.data);
+                // Defensive programming: Ensure data is an array
+                setInvoices(Array.isArray(response.data.data) ? response.data.data : []);
             }
         } catch (error) {
             console.error("Error fetching invoices", error);
+            // Optional: setInvoices([]) on error to be safe
         } finally {
             setLoading(false);
         }

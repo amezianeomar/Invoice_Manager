@@ -26,20 +26,21 @@ export default function EditInvoice({ invoiceId, onCancel }) {
 
     const fetchClients = async () => {
         const res = await axios.get('/resources.php?type=clients');
-        if (res.data.success) setClients(res.data.data);
+        if (res.data.success) setClients(Array.isArray(res.data.data) ? res.data.data : []);
     };
 
     useEffect(() => {
         const fetchData = async () => {
             await fetchClients();
             const servicesRes = await axios.get('/resources.php?type=services');
-            if (servicesRes.data.success) setServicesList(servicesRes.data.data);
+            if (servicesRes.data.success) setServicesList(Array.isArray(servicesRes.data.data) ? servicesRes.data.data : []);
 
             // Fetch Invoice Details
             try {
                 const invoiceRes = await axios.get(`/invoices.php?id=${invoiceId}`);
                 if (invoiceRes.data.success) {
-                    const { invoice, items } = invoiceRes.data.data;
+                    const invoice = invoiceRes.data.data.invoice;
+                    const items = Array.isArray(invoiceRes.data.data.items) ? invoiceRes.data.data.items : [];
 
                     // Format services for the form
                     const formattedServices = items.map(item => ({
