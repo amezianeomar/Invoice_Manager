@@ -70,6 +70,37 @@ export default function Dashboard({ setIsAuthenticated }) {
         new Date(dateString).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
 
 
+    const handleViewPDF = async (id) => {
+        try {
+            const backendUrl = axios.defaults.baseURL.replace('/api', '');
+
+            const response = await axios.get(`${backendUrl}/generate-pdf.php?id=${id}`, {
+                withCredentials: true
+            });
+
+            const printWindow = window.open('', '_blank');
+            if (printWindow) {
+                const baseTag = `<base href="${backendUrl}/">`;
+                const htmlContent = response.data.replace('<head>', '<head>' + baseTag);
+
+                printWindow.document.open();
+                printWindow.document.write(htmlContent);
+                printWindow.document.close();
+            } else {
+                alert("Veuillez autoriser les pop-ups pour voir le PDF.");
+            }
+        } catch (error) {
+            console.error("Erreur lors de l'ouverture du PDF", error);
+            if (error.response && error.response.status === 401) {
+                alert("Session expirée. Veuillez vous reconnecter.");
+                setIsAuthenticated(false);
+                navigate('/login');
+            } else {
+                alert("Erreur lors de l'ouverture du PDF. Vérifiez votre connexion. Ensure CORS is correctly configured on your backend.");
+            }
+        }
+    };
+
     if (showCreate) {
         return <CreateInvoice onCancel={() => { setShowCreate(false); fetchInvoices(); }} />;
     }
@@ -234,15 +265,13 @@ export default function Dashboard({ setIsAuthenticated }) {
                                     <div className="flex md:hidden justify-between items-center mb-2 border-b border-slate-50 pb-2">
                                         <span className="font-mono text-xs font-bold text-slate-400">#{invoice.id}</span>
                                         <div className="flex gap-1">
-                                            <a
-                                                href={`${axios.defaults.baseURL.replace('/api', '')}/generate-pdf.php?id=${invoice.id}`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
+                                            <button
+                                                onClick={() => handleViewPDF(invoice.id)}
                                                 className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
                                                 title="PDF"
                                             >
                                                 <Download className="w-4 h-4" />
-                                            </a>
+                                            </button>
                                             <button onClick={() => setEditingInvoiceId(invoice.id)} className="p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg">
                                                 <Edit2 className="w-4 h-4" />
                                             </button>
@@ -283,15 +312,13 @@ export default function Dashboard({ setIsAuthenticated }) {
 
                                     {/* Actions (Desktop) */}
                                     <div className="hidden md:flex col-span-2 justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <a
-                                            href={`${axios.defaults.baseURL.replace('/api', '')}/generate-pdf.php?id=${invoice.id}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
+                                        <button
+                                            onClick={() => handleViewPDF(invoice.id)}
                                             className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                                             title="PDF"
                                         >
                                             <Download className="w-4 h-4" />
-                                        </a>
+                                        </button>
                                         <button
                                             onClick={() => setEditingInvoiceId(invoice.id)}
                                             className="p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-colors"
