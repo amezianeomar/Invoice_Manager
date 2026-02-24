@@ -360,6 +360,7 @@ $items = $data['items'];
                                 await fetch('api/quick_update.php', {
                                     method: 'POST',
                                     headers: {'Content-Type': 'application/json'},
+                                    credentials: 'include',
                                     body: JSON.stringify({
                                         entity: this.dataset.entity,
                                         id: this.dataset.id,
