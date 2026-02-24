@@ -25,7 +25,7 @@ export default function CreateInvoice({ onCancel }) {
 
     // Watch for calculations
     const watchServices = watch("services");
-    const [total, setTotal] = useState(0);
+    const [isManualTotal, setIsManualTotal] = useState(false);
 
     useEffect(() => {
         const fetchResources = async () => {
@@ -43,12 +43,39 @@ export default function CreateInvoice({ onCancel }) {
         fetchResources();
     }, []);
 
-    useEffect(() => {
-        const newTotal = watchServices.reduce((sum, service) => {
-            return sum + (parseFloat(service.unit_price) || 0);
-        }, 0);
-        setTotal(newTotal);
-    }, [watchServices]);
+    // Derived state for total - much more reliable than useEffect
+    const calculatedTotal = watchServices ? watchServices.reduce((sum, service) => {
+        return sum + ((parseFloat(service.unit_price) || 0) * (parseFloat(service.quantity) || 1));
+    }, 0) : 0;
+
+    const handleServiceChange = (index, serviceId) => {
+        const selectedService = servicesList.find(s => s.id == serviceId);
+        if (selectedService) {
+            setValue(`services.${index}.unit_price`, selectedService.default_price);
+        }
+    };
+
+    const handleSmartFill = (index, field, value) => {
+        const service = watchServices[index];
+        const serviceId = service.service_id;
+        let newDesc = service.custom_desc;
+
+        if (serviceId === '1') { // Transport
+            const from = field === 'from' ? value : service.from_location;
+            const to = field === 'to' ? value : service.to_location;
+            if (from && to) newDesc = `Transfert ${from} -> ${to}`;
+        } else if (serviceId === '3') { // Excursion
+            const city = field === 'city' ? value : service.city;
+            if (city) newDesc = `Excursion ${city}`;
+        } else if (serviceId === '2') { // Mise a disposition
+            const city = field === 'city' ? value : service.city;
+            if (city) newDesc = `Mise a disposition (${city})`;
+        }
+
+        if (newDesc) {
+            setValue(`services.${index}.custom_desc`, newDesc);
+        }
+    };
 
     const onSubmit = async (data) => {
         setLoading(true);
@@ -68,7 +95,8 @@ export default function CreateInvoice({ onCancel }) {
             const invoiceData = {
                 ...data,
                 client_id: finalClientId,
-                custom_total: total
+                custom_total: isManualTotal ? data.manual_total : calculatedTotal,
+                total: isManualTotal ? data.manual_total : calculatedTotal
             };
 
             const response = await axios.post('/invoices.php', invoiceData);
@@ -83,13 +111,6 @@ export default function CreateInvoice({ onCancel }) {
             console.error(error);
         } finally {
             setLoading(false);
-        }
-    };
-
-    const handleServiceChange = (index, serviceId) => {
-        const selectedService = servicesList.find(s => s.id == serviceId);
-        if (selectedService) {
-            setValue(`services.${index}.unit_price`, selectedService.default_price);
         }
     };
 
@@ -205,6 +226,51 @@ export default function CreateInvoice({ onCancel }) {
                                         />
                                     </div>
                                 </div>
+
+                                {/* Manual Total Toggle */}
+                                <div className="md:col-span-2 border-t border-slate-50 pt-4 mt-2">
+                                    <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="relative inline-block w-12 h-6 transition-colors duration-200 ease-in-out border-2 border-transparent rounded-full cursor-pointer bg-slate-200">
+                                                <input
+                                                    type="checkbox"
+                                                    id="manualTotal"
+                                                    checked={isManualTotal}
+                                                    onChange={(e) => {
+                                                        setIsManualTotal(e.target.checked);
+                                                        if (!e.target.checked) setValue('manual_total', null);
+                                                    }}
+                                                    className="absolute w-0 h-0 opacity-0"
+                                                />
+                                                <label htmlFor="manualTotal" className={`block overflow-hidden h-6 rounded-full cursor-pointer transition-colors ${isManualTotal ? 'bg-blue-600' : 'bg-slate-300'}`}></label>
+                                                <div className={`absolute left-0 inline-block w-6 h-6 mb-1 transition-transform duration-200 ease-in-out transform bg-white rounded-full shadow-md ${isManualTotal ? 'translate-x-6' : 'translate-x-0'}`}></div>
+                                            </div>
+                                            <label htmlFor="manualTotal" className="text-sm font-semibold text-slate-600 cursor-pointer select-none">
+                                                Saisir le montant total manuellement
+                                            </label>
+                                        </div>
+
+                                        <div className="flex items-center gap-4">
+                                            <span className="text-sm text-slate-500 font-medium uppercase tracking-wide">Total Facture:</span>
+                                            {isManualTotal ? (
+                                                <div className="relative w-48">
+                                                    <input
+                                                        type="number"
+                                                        step="0.01"
+                                                        {...register("manual_total")}
+                                                        className="w-full px-4 py-2 text-right text-xl font-bold text-blue-700 bg-blue-50 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 outline-none"
+                                                        placeholder={calculatedTotal.toFixed(2)}
+                                                    />
+                                                    <span className="absolute right-12 top-1/2 -translate-y-1/2 text-xs text-blue-400 font-bold pointer-events-none">MAD</span>
+                                                </div>
+                                            ) : (
+                                                <div className="text-2xl font-bold text-slate-800">
+                                                    {calculatedTotal.toFixed(2)} <span className="text-sm text-slate-400 font-medium">MAD</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -238,47 +304,54 @@ export default function CreateInvoice({ onCancel }) {
                                             <button
                                                 type="button"
                                                 onClick={() => remove(index)}
-                                                className="absolute top-4 right-4 p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                                className="absolute top-4 right-4 p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all z-10"
                                             >
                                                 <Trash2 className="w-4 h-4" />
                                             </button>
 
-                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pr-8 mb-4">
-                                                <div className="lg:col-span-2">
-                                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 block">Service</label>
+                                            {/* Row 1: Service & Price */}
+                                            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mb-4">
+                                                <div className="md:col-span-6">
+                                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 block">Type de Service</label>
                                                     <select
                                                         {...register(`services.${index}.service_id`, { required: true })}
                                                         onChange={(e) => handleServiceChange(index, e.target.value)}
-                                                        className="w-full p-2.5 rounded-lg border border-slate-200 bg-slate-50 text-sm focus:ring-2 focus:ring-blue-500/20 outline-none"
+                                                        className="w-full p-3 rounded-lg border border-slate-200 bg-slate-50 text-sm focus:ring-2 focus:ring-blue-500/20 outline-none transition-all font-medium text-slate-700"
                                                     >
-                                                        <option value="">Choisir...</option>
+                                                        <option value="">Sélectionner...</option>
                                                         {servicesList.map(s => (
                                                             <option key={s.id} value={s.id}>{s.title}</option>
                                                         ))}
                                                     </select>
                                                 </div>
 
-                                                <div>
-                                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 block">Prix (MAD)</label>
+                                                <div className="md:col-span-2">
+                                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 block">Qté</label>
                                                     <input
                                                         type="number"
-                                                        {...register(`services.${index}.unit_price`, { required: true })}
-                                                        className="w-full p-2.5 rounded-lg border border-slate-200 bg-slate-50 text-sm focus:ring-2 focus:ring-blue-500/20 outline-none font-mono"
+                                                        {...register(`services.${index}.quantity`, { required: true, min: 1 })}
+                                                        className="w-full p-3 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-slate-700 text-center"
+                                                        placeholder="1"
                                                     />
                                                 </div>
 
-                                                <div>
-                                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 block">Date</label>
-                                                    <input
-                                                        type="date"
-                                                        {...register(`services.${index}.service_date`)}
-                                                        className="w-full p-2.5 rounded-lg border border-slate-200 bg-slate-50 text-sm focus:ring-2 focus:ring-blue-500/20 outline-none"
-                                                    />
+                                                <div className="md:col-span-4">
+                                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 block">Prix Unitaire (MAD)</label>
+                                                    <div className="relative">
+                                                        <input
+                                                            type="number"
+                                                            {...register(`services.${index}.unit_price`, { required: true })}
+                                                            className="w-full pl-3 pr-10 py-3 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-blue-500/20 outline-none font-mono font-bold text-slate-700 text-right"
+                                                            placeholder="0.00"
+                                                        />
+                                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 pointer-events-none">MAD</span>
+                                                    </div>
                                                 </div>
                                             </div>
 
-                                            {/* Dynamic Fields */}
-                                            <div className="bg-slate-50/50 p-4 rounded-xl border border-dashed border-slate-200">
+                                            {/* Row 2: Dynamic Fields & Description */}
+                                            <div className="bg-slate-50/50 p-4 rounded-xl border border-dashed border-slate-200 space-y-4 mb-4">
+                                                {/* Dynamic Location/City Fields */}
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     {serviceType === '1' && (
                                                         <>
@@ -286,6 +359,10 @@ export default function CreateInvoice({ onCancel }) {
                                                                 <MapPin className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
                                                                 <input
                                                                     {...register(`services.${index}.from_location`)}
+                                                                    onChange={(e) => {
+                                                                        register(`services.${index}.from_location`).onChange(e);
+                                                                        handleSmartFill(index, 'from', e.target.value);
+                                                                    }}
                                                                     placeholder="De (Ville départ)"
                                                                     className="w-full pl-10 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500"
                                                                 />
@@ -294,6 +371,10 @@ export default function CreateInvoice({ onCancel }) {
                                                                 <MapPin className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
                                                                 <input
                                                                     {...register(`services.${index}.to_location`)}
+                                                                    onChange={(e) => {
+                                                                        register(`services.${index}.to_location`).onChange(e);
+                                                                        handleSmartFill(index, 'to', e.target.value);
+                                                                    }}
                                                                     placeholder="À (Ville arrivée)"
                                                                     className="w-full pl-10 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500"
                                                                 />
@@ -307,12 +388,43 @@ export default function CreateInvoice({ onCancel }) {
                                                                 <MapPin className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
                                                                 <input
                                                                     {...register(`services.${index}.city`)}
+                                                                    onChange={(e) => {
+                                                                        register(`services.${index}.city`).onChange(e);
+                                                                        handleSmartFill(index, 'city', e.target.value);
+                                                                    }}
                                                                     placeholder="Ville concernée"
                                                                     className="w-full pl-10 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500"
                                                                 />
                                                             </div>
                                                         </div>
                                                     )}
+                                                </div>
+
+                                                {/* Description Field (RESTORED) */}
+                                                <div>
+                                                    <label className="text-[10px] font-bold text-blue-500 uppercase tracking-widest mb-1 block flex items-center gap-1">
+                                                        <FileText className="w-3 h-3" />
+                                                        Description sur Facture
+                                                    </label>
+                                                    <textarea
+                                                        {...register(`services.${index}.custom_desc`)}
+                                                        rows="2"
+                                                        className="w-full p-3 rounded-lg border border-blue-100 bg-blue-50/20 text-sm focus:ring-2 focus:ring-blue-500/20 outline-none transition-all placeholder-slate-400"
+                                                        placeholder="Description détaillée qui apparaîtra sur le PDF..."
+                                                    ></textarea>
+                                                </div>
+                                            </div>
+
+                                            {/* Row 3: Date */}
+                                            <div>
+                                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 block">Date de la prestation</label>
+                                                <div className="relative max-w-xs">
+                                                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                                    <input
+                                                        type="date"
+                                                        {...register(`services.${index}.service_date`)}
+                                                        className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 bg-slate-50 text-sm focus:ring-2 focus:ring-blue-500/20 outline-none"
+                                                    />
                                                 </div>
                                             </div>
                                         </motion.div>
@@ -328,7 +440,7 @@ export default function CreateInvoice({ onCancel }) {
                     <div className="text-center md:text-left">
                         <span className="text-slate-500 text-sm font-medium uppercase tracking-wider">Total Estimé</span>
                         <div className="text-3xl font-bold text-slate-900 font-serif">
-                            {new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD' }).format(total)}
+                            {new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD' }).format(calculatedTotal)}
                         </div>
                     </div>
 

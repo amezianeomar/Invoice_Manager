@@ -52,13 +52,32 @@ class InvoiceManager {
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
             
+            // Merge duplicate services
+            $mergedServices = [];
             foreach ($services as $service) {
+                $key = $service['service_id'] . '|' . 
+                       $service['unit_price'] . '|' . 
+                       (isset($service['service_date']) ? $service['service_date'] : '') . '|' . 
+                       (isset($service['from_location']) ? trim($service['from_location']) : '') . '|' . 
+                       (isset($service['to_location']) ? trim($service['to_location']) : '') . '|' . 
+                       (isset($service['city']) ? trim($service['city']) : '') . '|' . 
+                       (isset($service['custom_desc']) ? trim($service['custom_desc']) : '');
+
+                if (isset($mergedServices[$key])) {
+                    $mergedServices[$key]['quantity'] += floatval($service['quantity'] ?? 1);
+                } else {
+                    $service['quantity'] = floatval($service['quantity'] ?? 1);
+                    $mergedServices[$key] = $service;
+                }
+            }
+
+            foreach ($mergedServices as $service) {
                 
                 $stmt->execute([
                     $invoiceId,
                     $service['service_id'],
                     $service['service_date'],
-                    1,
+                    $service['quantity'],
                     $service['unit_price'],
                     !empty($service['from_location']) ? trim($service['from_location']) : null,
                     !empty($service['to_location']) ? trim($service['to_location']) : null,
@@ -101,17 +120,34 @@ class InvoiceManager {
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
             
+            // Merge duplicate services
+            $mergedServices = [];
             foreach ($services as $service) {
-                $serviceDate = null;
-                if (!empty($service['service_date']) && $service['service_date'] !== '0000-00-00') {
-                    $serviceDate = $service['service_date'];
-                }
+                $serviceDate = (!empty($service['service_date']) && $service['service_date'] !== '0000-00-00') ? $service['service_date'] : null;
                 
+                $key = $service['service_id'] . '|' . 
+                       $service['unit_price'] . '|' . 
+                       $serviceDate . '|' . 
+                       (isset($service['from_location']) ? trim($service['from_location']) : '') . '|' . 
+                       (isset($service['to_location']) ? trim($service['to_location']) : '') . '|' . 
+                       (isset($service['city']) ? trim($service['city']) : '') . '|' . 
+                       (isset($service['custom_desc']) ? trim($service['custom_desc']) : '');
+
+                if (isset($mergedServices[$key])) {
+                    $mergedServices[$key]['quantity'] += floatval($service['quantity'] ?? 1);
+                } else {
+                    $service['quantity'] = floatval($service['quantity'] ?? 1);
+                    $service['processed_date'] = $serviceDate; // Store processed date to avoid re-logic
+                    $mergedServices[$key] = $service;
+                }
+            }
+
+            foreach ($mergedServices as $service) {
                 $stmt->execute([
                     $invoiceId,
                     $service['service_id'],
-                    $serviceDate, 
-                    1,
+                    $service['processed_date'], 
+                    $service['quantity'],
                     $service['unit_price'],
                     !empty($service['from_location']) ? trim($service['from_location']) : null,
                     !empty($service['to_location']) ? trim($service['to_location']) : null,

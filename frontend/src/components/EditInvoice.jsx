@@ -45,6 +45,7 @@ export default function EditInvoice({ invoiceId, onCancel }) {
                     // Format services for the form
                     const formattedServices = items.map(item => ({
                         service_id: item.service_id,
+                        quantity: item.quantity || 1,
                         unit_price: item.unit_price,
                         custom_desc: item.custom_desc || "",
                         service_date: item.service_date || "",
@@ -55,7 +56,7 @@ export default function EditInvoice({ invoiceId, onCancel }) {
 
                     // Determine if manual total was used
                     // We sum the items and see if it matches the total
-                    const sumItems = formattedServices.reduce((acc, curr) => acc + parseFloat(curr.unit_price || 0), 0);
+                    const sumItems = formattedServices.reduce((acc, curr) => acc + ((parseFloat(curr.unit_price) || 0) * (parseFloat(curr.quantity) || 1)), 0);
                     const isManual = Math.abs(parseFloat(invoice.total) - sumItems) > 0.01;
 
                     setIsManualTotal(isManual);
@@ -115,7 +116,9 @@ export default function EditInvoice({ invoiceId, onCancel }) {
     };
 
     const watchedServices = watch("services");
-    const calculatedTotal = watchedServices ? watchedServices.reduce((sum, service) => sum + (parseFloat(service.unit_price) || 0), 0) : 0;
+    const calculatedTotal = watchedServices ? watchedServices.reduce((sum, service) => {
+        return sum + ((parseFloat(service.unit_price) || 0) * (parseFloat(service.quantity) || 1));
+    }, 0) : 0;
 
     const handleSmartFill = (index, field, value) => {
         const service = watchedServices[index];
@@ -337,8 +340,8 @@ export default function EditInvoice({ invoiceId, onCancel }) {
                                             <h4 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Détails de la prestation</h4>
                                         </div>
 
-                                        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mb-6">
-                                            <div className="md:col-span-8">
+                                        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mb-4">
+                                            <div className="md:col-span-6">
                                                 <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Type de Service</label>
                                                 <select
                                                     {...register(`services.${index}.service_id`)}
@@ -349,6 +352,17 @@ export default function EditInvoice({ invoiceId, onCancel }) {
                                                     {servicesList.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
                                                 </select>
                                             </div>
+
+                                            <div className="md:col-span-2">
+                                                <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Qté</label>
+                                                <input
+                                                    type="number"
+                                                    {...register(`services.${index}.quantity`, { required: true, min: 1 })}
+                                                    className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-slate-700 text-center"
+                                                    placeholder="1"
+                                                />
+                                            </div>
+
                                             <div className="md:col-span-4">
                                                 <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Prix Unitaire (MAD)</label>
                                                 <div className="relative">
@@ -367,8 +381,9 @@ export default function EditInvoice({ invoiceId, onCancel }) {
                                             </div>
                                         </div>
 
-                                        {/* Dynamic Fields */}
+                                        {/* Row 2: Dynamic Fields & Description */}
                                         <div className="bg-slate-50/50 p-5 rounded-xl border border-dashed border-slate-200 mb-6 space-y-4">
+                                            {/* Dynamic Location/City Fields */}
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 {(serviceType === '1') && (
                                                     <>
@@ -403,7 +418,7 @@ export default function EditInvoice({ invoiceId, onCancel }) {
                                                 )}
                                             </div>
 
-                                            {/* Custom Description */}
+                                            {/* Description Field */}
                                             <div>
                                                 <label className="block text-[11px] font-bold text-blue-600 mb-2 uppercase tracking-wide flex items-center gap-2">
                                                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
@@ -418,6 +433,7 @@ export default function EditInvoice({ invoiceId, onCancel }) {
                                             </div>
                                         </div>
 
+                                        {/* Row 3: Date */}
                                         <div>
                                             <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Date de la prestation</label>
                                             <input {...register(`services.${index}.service_date`)} type="date" className="w-full md:w-auto px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-600 outline-none focus:border-blue-500" />
@@ -431,7 +447,7 @@ export default function EditInvoice({ invoiceId, onCancel }) {
                         <div className="flex flex-col sm:flex-row gap-4 pt-4 border-t border-gray-200">
                             <button
                                 type="button"
-                                onClick={() => append({ service_id: "", unit_price: "", custom_desc: "", service_date: new Date().toISOString().split('T')[0] })}
+                                onClick={() => append({ service_id: "", unit_price: "", quantity: 1, custom_desc: "", service_date: new Date().toISOString().split('T')[0] })}
                                 className="flex-1 py-4 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 font-medium hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50/50 transition-all flex justify-center items-center gap-2 group"
                             >
                                 <div className="bg-gray-100 group-hover:bg-blue-100 rounded-full p-1 transition-colors">
