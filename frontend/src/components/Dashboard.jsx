@@ -72,16 +72,20 @@ export default function Dashboard({ setIsAuthenticated }) {
 
     const handleViewPDF = async (id) => {
         try {
-            const backendUrl = axios.defaults.baseURL.replace('/api', '');
+            // Because axios.defaults.baseURL is either '/api' (local) or 'https://ameziane.alwaysdata.net/api' (prod)
+            const isProd = axios.defaults.baseURL.startsWith('http');
+            const backendUrl = isProd ? axios.defaults.baseURL.replace('/api', '') : '';
 
             const response = await axios.get(`/generate-pdf.php?id=${id}`, {
-                baseURL: backendUrl || '/',
+                baseURL: isProd ? backendUrl : '/',
                 withCredentials: true
             });
 
             const printWindow = window.open('', '_blank');
             if (printWindow) {
-                const baseTag = `<base href="${backendUrl}/">`;
+                // Determine base tag for loading images within the HTML
+                const baseHref = isProd ? `${backendUrl}/` : '/';
+                const baseTag = `<base href="${baseHref}">`;
                 const htmlContent = response.data.replace('<head>', '<head>' + baseTag);
 
                 printWindow.document.open();
