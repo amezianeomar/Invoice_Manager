@@ -1,4 +1,12 @@
 <?php
+$cookieParams = session_get_cookie_params();
+session_set_cookie_params([
+    'lifetime' => $cookieParams['lifetime'],
+    'path' => '/',
+    'secure' => true,
+    'httponly' => true,
+    'samesite' => 'None'
+]);
 session_start(); 
 require_once 'config/database.php';
 
