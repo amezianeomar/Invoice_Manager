@@ -74,7 +74,8 @@ export default function Dashboard({ setIsAuthenticated }) {
         try {
             const backendUrl = axios.defaults.baseURL.replace('/api', '');
 
-            const response = await axios.get(`${backendUrl}/generate-pdf.php?id=${id}`, {
+            const response = await axios.get(`/generate-pdf.php?id=${id}`, {
+                baseURL: backendUrl || '/',
                 withCredentials: true
             });
 
