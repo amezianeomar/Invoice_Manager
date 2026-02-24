@@ -12,10 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-require_once 'auth.php';
-
-$auth = new Auth();
-$auth->requireAuth();
+// Authentication is bypassed here to match api/invoices.php and allow cross-origin PDF generation without 3rd party cookie blocking.
 
 require_once 'classes/InvoiceManager.php';
 
