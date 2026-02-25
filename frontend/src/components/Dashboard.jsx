@@ -15,6 +15,8 @@ export default function Dashboard({ setIsAuthenticated }) {
     const [showCreate, setShowCreate] = useState(false);
     const [editingInvoiceId, setEditingInvoiceId] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const invoicesPerPage = 6;
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -56,6 +58,16 @@ export default function Dashboard({ setIsAuthenticated }) {
         inv.client_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         inv.id.toString().includes(searchTerm)
     );
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm]);
+
+    // Pagination
+    const totalPages = Math.ceil(filteredInvoices.length / invoicesPerPage);
+    const indexOfLastInvoice = currentPage * invoicesPerPage;
+    const indexOfFirstInvoice = indexOfLastInvoice - invoicesPerPage;
+    const currentInvoices = filteredInvoices.slice(indexOfFirstInvoice, indexOfLastInvoice);
 
     // Calculate Summary Stats
     const totalRevenue = invoices.reduce((sum, inv) => sum + parseFloat(inv.total), 0);
@@ -258,10 +270,12 @@ export default function Dashboard({ setIsAuthenticated }) {
                             <div className="col-span-2 text-right">Actions</div>
                         </div>
 
-                        {filteredInvoices.map((invoice) => (
+                        {currentInvoices.map((invoice, index) => (
                             <motion.div
                                 key={invoice.id}
-                                variants={itemVariants}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.3, delay: index * 0.05 }}
                                 whileHover={{ scale: 1.005 }}
                                 className="glass-card p-5 md:py-4 md:px-6 group relative overflow-hidden"
                             >
@@ -342,6 +356,29 @@ export default function Dashboard({ setIsAuthenticated }) {
                                 </div>
                             </motion.div>
                         ))}
+
+                        {/* Pagination Controls */}
+                        {totalPages > 1 && (
+                            <div className="flex justify-center items-center mt-8 gap-2 pb-4">
+                                <button
+                                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                    disabled={currentPage === 1}
+                                    className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-all font-medium shadow-sm flex items-center justify-center"
+                                >
+                                    Précédent
+                                </button>
+                                <span className="text-sm font-bold text-slate-400 mx-4">
+                                    Page {currentPage} sur {totalPages}
+                                </span>
+                                <button
+                                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                    disabled={currentPage === totalPages}
+                                    className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-all font-medium shadow-sm flex items-center justify-center"
+                                >
+                                    Suivant
+                                </button>
+                            </div>
+                        )}
                     </motion.div>
                 )}
             </main>
