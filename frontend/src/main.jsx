@@ -4,12 +4,7 @@ import axios from 'axios'
 import './index.css'
 import App from './App.jsx'
 
-// Set base URL based on environment
-const isProduction = import.meta.env.PROD;
-// REPLACE WITH YOUR ALWAYS DATA URL AFTER DEPLOYMENT
-const productionUrl = 'https://ameziane.alwaysdata.net/api';
-
-axios.defaults.baseURL = isProduction ? productionUrl : '/api';
+axios.defaults.baseURL = '/api';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

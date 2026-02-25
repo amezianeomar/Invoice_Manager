@@ -1,18 +1,8 @@
 <?php
-// Handle CORS for Cross-Origin PDF Fetching
-$origin = $_SERVER['HTTP_ORIGIN'] ?? (isset($_SERVER['HTTP_REFERER']) ? parse_url($_SERVER['HTTP_REFERER'], PHP_URL_SCHEME) . '://' . parse_url($_SERVER['HTTP_REFERER'], PHP_URL_HOST) . (parse_url($_SERVER['HTTP_REFERER'], PHP_URL_PORT) ? ':' . parse_url($_SERVER['HTTP_REFERER'], PHP_URL_PORT) : '') : 'http://localhost:5173');
-header("Access-Control-Allow-Origin: $origin");
-header("Access-Control-Allow-Credentials: true");
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+require_once 'auth.php';
 
-// Handle preflight OPTIONS request
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
-
-// Authentication is bypassed here to match api/invoices.php and allow cross-origin PDF generation without 3rd party cookie blocking.
+$auth = new Auth();
+$auth->requireAuth();
 
 require_once 'classes/InvoiceManager.php';
 

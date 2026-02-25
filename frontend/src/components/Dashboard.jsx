@@ -82,41 +82,7 @@ export default function Dashboard({ setIsAuthenticated }) {
         new Date(dateString).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
 
 
-    const handleViewPDF = async (id) => {
-        try {
-            // Because axios.defaults.baseURL is either '/api' (local) or 'https://ameziane.alwaysdata.net/api' (prod)
-            const isProd = axios.defaults.baseURL.startsWith('http');
-            const backendUrl = isProd ? axios.defaults.baseURL.replace('/api', '') : '';
 
-            const response = await axios.get(`/generate-pdf.php?id=${id}`, {
-                baseURL: isProd ? backendUrl : '/',
-                withCredentials: true
-            });
-
-            const printWindow = window.open('', '_blank');
-            if (printWindow) {
-                // Determine base tag for loading images within the HTML
-                const baseHref = isProd ? `${backendUrl}/` : '/';
-                const baseTag = `<base href="${baseHref}">`;
-                const htmlContent = response.data.replace('<head>', '<head>' + baseTag);
-
-                printWindow.document.open();
-                printWindow.document.write(htmlContent);
-                printWindow.document.close();
-            } else {
-                alert("Veuillez autoriser les pop-ups pour voir le PDF.");
-            }
-        } catch (error) {
-            console.error("Erreur lors de l'ouverture du PDF", error);
-            if (error.response && error.response.status === 401) {
-                alert("Session expirée. Veuillez vous reconnecter.");
-                setIsAuthenticated(false);
-                navigate('/login');
-            } else {
-                alert("Erreur lors de l'ouverture du PDF. Vérifiez votre connexion. Ensure CORS is correctly configured on your backend.");
-            }
-        }
-    };
 
     if (showCreate) {
         return <CreateInvoice onCancel={() => { setShowCreate(false); fetchInvoices(); }} />;
@@ -284,13 +250,15 @@ export default function Dashboard({ setIsAuthenticated }) {
                                     <div className="flex md:hidden justify-between items-center mb-2 border-b border-slate-50 pb-2">
                                         <span className="font-mono text-xs font-bold text-slate-400">#{invoice.id}</span>
                                         <div className="flex gap-1">
-                                            <button
-                                                onClick={() => handleViewPDF(invoice.id)}
+                                            <a
+                                                href={`${axios.defaults.baseURL.replace('/api', '')}/generate-pdf.php?id=${invoice.id}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
                                                 className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
                                                 title="PDF"
                                             >
                                                 <Download className="w-4 h-4" />
-                                            </button>
+                                            </a>
                                             <button onClick={() => setEditingInvoiceId(invoice.id)} className="p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg">
                                                 <Edit2 className="w-4 h-4" />
                                             </button>
@@ -331,13 +299,15 @@ export default function Dashboard({ setIsAuthenticated }) {
 
                                     {/* Actions (Desktop) */}
                                     <div className="hidden md:flex col-span-2 justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button
-                                            onClick={() => handleViewPDF(invoice.id)}
+                                        <a
+                                            href={`${axios.defaults.baseURL.replace('/api', '')}/generate-pdf.php?id=${invoice.id}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
                                             className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                                             title="PDF"
                                         >
                                             <Download className="w-4 h-4" />
-                                        </button>
+                                        </a>
                                         <button
                                             onClick={() => setEditingInvoiceId(invoice.id)}
                                             className="p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-colors"

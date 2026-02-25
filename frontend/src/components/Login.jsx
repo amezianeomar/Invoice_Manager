@@ -26,7 +26,9 @@ export default function Login({ setIsAuthenticated }) {
                     navigate('/');
                 }, 800);
             } else {
-                setError(response.data.message || 'Identifiants incorrects');
+                const errorMessage = response.data.message
+                    || (typeof response.data === 'string' ? response.data.substring(0, 100) : 'Identifiants incorrects');
+                setError(errorMessage);
                 setLoading(false);
             }
         } catch (err) {
