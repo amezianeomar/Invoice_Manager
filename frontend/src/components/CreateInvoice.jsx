@@ -19,7 +19,7 @@ export default function CreateInvoice({ onCancel }) {
     const [clients, setClients] = useState([]);
     const [servicesList, setServicesList] = useState([]);
     const [isNewClient, setIsNewClient] = useState(false);
-    const [newClientName, setNewClientName] = useState('');
+    const [newClient, setNewClient] = useState({ name: '', details: '' });
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
 
@@ -82,10 +82,10 @@ export default function CreateInvoice({ onCancel }) {
         try {
             let finalClientId = data.client_id;
 
-            if (isNewClient && newClientName) {
-                const clientRes = await axios.post('/resources.php', {
-                    name: newClientName,
-                    type: 'client'
+            if (isNewClient && newClient.name) {
+                const clientRes = await axios.post('/resources.php?type=clients', {
+                    name: newClient.name,
+                    details: newClient.details
                 });
                 if (clientRes.data.success) {
                     finalClientId = clientRes.data.id;
@@ -203,16 +203,28 @@ export default function CreateInvoice({ onCancel }) {
                                 </div>
 
                                 {isNewClient && (
-                                    <div className="md:col-span-2">
-                                        <label className="block text-sm font-medium text-slate-700 mb-2">Nom du Nouveau Client</label>
-                                        <input
-                                            type="text"
-                                            value={newClientName}
-                                            onChange={(e) => setNewClientName(e.target.value)}
-                                            className="w-full p-3 rounded-xl border border-blue-200 bg-blue-50/30 focus:bg-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
-                                            placeholder="Ex: Agence Voyage XYZ..."
-                                        />
-                                    </div>
+                                    <>
+                                        <div className="md:col-span-1">
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">Nom du Nouveau Client</label>
+                                            <input
+                                                type="text"
+                                                value={newClient.name}
+                                                onChange={(e) => setNewClient({...newClient, name: e.target.value})}
+                                                className="w-full p-3 rounded-xl border border-blue-200 bg-blue-50/30 focus:bg-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                                                placeholder="Ex: Agence Voyage XYZ..."
+                                            />
+                                        </div>
+                                        <div className="md:col-span-1">
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">Détails (ICE, RC...)</label>
+                                            <input
+                                                type="text"
+                                                value={newClient.details}
+                                                onChange={(e) => setNewClient({...newClient, details: e.target.value})}
+                                                className="w-full p-3 rounded-xl border border-blue-200 bg-blue-50/30 focus:bg-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                                                placeholder="Ex: ICE: 123456789"
+                                            />
+                                        </div>
+                                    </>
                                 )}
 
                                 <div className="md:col-span-2">
