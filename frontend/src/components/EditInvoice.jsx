@@ -413,7 +413,7 @@ export default function EditInvoice({ invoiceId, onCancel }) {
                                                                 register(`services.${index}.city`).onChange(e);
                                                                 handleSmartFill(index, 'city', e.target.value);
                                                             }}
-                                                            placeholder="Ville concernée" className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 focus:border-blue-500 outline-none" />
+                                                            placeholder={serviceType === '2' ? "Nom de la voiture" : "Ville concernée"} className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 focus:border-blue-500 outline-none" />
                                                     </div>
                                                 )}
                                             </div>

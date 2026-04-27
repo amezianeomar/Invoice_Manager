@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Plus, Trash2, Save, User, Calendar, MapPin, FileText, CheckCircle } from 'lucide-react';
+import { X, Plus, Trash2, Save, User, Calendar, MapPin, FileText, CheckCircle, Car } from 'lucide-react';
 
 export default function CreateInvoice({ onCancel }) {
     const { register, control, handleSubmit, watch, setValue, formState: { errors } } = useForm({
@@ -314,8 +314,10 @@ export default function CreateInvoice({ onCancel }) {
                                                 <div className="md:col-span-6">
                                                     <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 block">Type de Service</label>
                                                     <select
-                                                        {...register(`services.${index}.service_id`, { required: true })}
-                                                        onChange={(e) => handleServiceChange(index, e.target.value)}
+                                                        {...register(`services.${index}.service_id`, { 
+                                                            required: true,
+                                                            onChange: (e) => handleServiceChange(index, e.target.value)
+                                                        })}
                                                         className="w-full p-3 rounded-lg border border-slate-200 bg-slate-50 text-sm focus:ring-2 focus:ring-blue-500/20 outline-none transition-all font-medium text-slate-700"
                                                     >
                                                         <option value="">Sélectionner...</option>
@@ -385,14 +387,18 @@ export default function CreateInvoice({ onCancel }) {
                                                     {(serviceType === '2' || serviceType === '3') && (
                                                         <div className="col-span-2">
                                                             <div className="relative">
-                                                                <MapPin className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
+                                                                {serviceType === '2' ? (
+                                                                    <Car className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
+                                                                ) : (
+                                                                    <MapPin className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
+                                                                )}
                                                                 <input
                                                                     {...register(`services.${index}.city`)}
                                                                     onChange={(e) => {
                                                                         register(`services.${index}.city`).onChange(e);
                                                                         handleSmartFill(index, 'city', e.target.value);
                                                                     }}
-                                                                    placeholder="Ville concernée"
+                                                                    placeholder={serviceType === '2' ? "Nom de la voiture" : "Ville concernée"}
                                                                     className="w-full pl-10 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500"
                                                                 />
                                                             </div>

@@ -53,6 +53,8 @@ $items = $data['items'];
             color: #1f2937;
             background: #f3f4f6;
             -webkit-font-smoothing: antialiased;
+            min-width: min-content;
+            padding-bottom: 80px;
         }
         
         .page-container {
@@ -308,11 +310,17 @@ $items = $data['items'];
         /* Controls */
         .controls {
             position: fixed;
-            top: 20px;
+            bottom: 20px;
             right: 20px;
             display: flex;
             gap: 12px;
-            z-index: 50;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.85);
+            padding: 12px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
         }
 
         .btn {

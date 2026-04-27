@@ -194,7 +194,7 @@ export default function Dashboard({ setIsAuthenticated }) {
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.3 }}
-                    className="glass-card p-2 mb-6 flex items-center gap-4 sticky top-20 z-30"
+                    className="glass-card p-2 mb-6 flex items-center gap-4 md:sticky md:top-20 md:z-30"
                 >
                     <div className="relative flex-1">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
@@ -329,21 +329,21 @@ export default function Dashboard({ setIsAuthenticated }) {
 
                         {/* Pagination Controls */}
                         {totalPages > 1 && (
-                            <div className="flex justify-center items-center mt-8 gap-2 pb-4">
+                            <div className="flex justify-center items-center mt-8 gap-1 md:gap-2 pb-4">
                                 <button
                                     onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                                     disabled={currentPage === 1}
-                                    className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-all font-medium shadow-sm flex items-center justify-center"
+                                    className="px-3 md:px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-all font-medium shadow-sm flex items-center justify-center text-sm md:text-base"
                                 >
                                     Précédent
                                 </button>
-                                <span className="text-sm font-bold text-slate-400 mx-4">
+                                <span className="text-xs md:text-sm font-bold text-slate-400 mx-2 md:mx-4">
                                     Page {currentPage} sur {totalPages}
                                 </span>
                                 <button
                                     onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                                     disabled={currentPage === totalPages}
-                                    className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-all font-medium shadow-sm flex items-center justify-center"
+                                    className="px-3 md:px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-all font-medium shadow-sm flex items-center justify-center text-sm md:text-base"
                                 >
                                     Suivant
                                 </button>
